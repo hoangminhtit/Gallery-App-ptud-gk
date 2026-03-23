@@ -1,0 +1,45 @@
+#root {
+    margin: 0;
+    padding: 0;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brand);
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+.loading::after {
+    content: '';
+    width: 42px;
+    height: 42px;
+    margin-left: 12px;
+    border-radius: 50%;
+    border: 3px solid rgba(15, 118, 110, 0.2);
+    border-top-color: var(--brand);
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
