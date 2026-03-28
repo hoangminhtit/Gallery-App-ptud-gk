@@ -22,6 +22,7 @@ class UserLogin(BaseModel):
     """User login schema"""
     username: str
     password: str
+    role: Optional[UserRole] = UserRole.USER
 
 
 class UserResponse(BaseModel):
