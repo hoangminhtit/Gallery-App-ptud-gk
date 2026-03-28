@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { photoAPI } from '../api';
 import PhotoCard from './PhotoCard';
 import UploadModal from './UploadModal';
+import AdminPanel from './AdminPanel';
 import '../styles/Gallery.css';
 
 export default function Gallery() {
@@ -60,7 +61,7 @@ export default function Gallery() {
   return (
     <div className="gallery-container">
       <header className="gallery-header">
-        <h1>Thư Viện Ảnh</h1>
+        <h1>Gallery Application</h1>
         <div className="header-actions">
           <div className="user-info">
             <span>Xin chào, {user?.username}</span>
@@ -83,6 +84,8 @@ export default function Gallery() {
           onChange={handleSearch}
         />
       </div>
+
+      {user?.role === 'admin' && <AdminPanel currentUser={user} />}
 
       {error && <div className="error-message">{error}</div>}
 

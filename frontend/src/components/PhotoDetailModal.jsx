@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { photoAPI, API_BASE_URL } from '../api';
 import '../styles/Modal.css';
 

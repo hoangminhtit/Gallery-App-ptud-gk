@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 import { authAPI } from './api';
 
 const AuthContext = createContext();
@@ -20,11 +20,12 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (username, password, role = 'user') => {
     try {
       const response = await authAPI.login({
         username: username.trim(),
         password,
+        role,
       });
       const { access_token, user: userData } = response.data;
       

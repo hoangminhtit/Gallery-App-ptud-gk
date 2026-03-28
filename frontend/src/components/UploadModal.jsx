@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { photoAPI } from '../api';
 import '../styles/Modal.css';
 

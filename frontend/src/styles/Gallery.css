@@ -85,7 +85,7 @@
 }
 
 .gallery-search {
-    padding: 28px 20px 18px;
+    padding: 28px 20px 14px;
     text-align: center;
 }
 
@@ -151,9 +151,104 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 18px;
-    padding: 18px 24px 32px;
+    padding: 16px 24px 32px;
     max-width: 1400px;
     margin: 0 auto;
+}
+
+.admin-panel {
+    width: min(1200px, calc(100% - 40px));
+    margin: 6px auto 14px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(213, 207, 196, 0.9);
+    border-radius: 18px;
+    box-shadow: var(--shadow-soft);
+    padding: 16px;
+}
+
+.admin-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.admin-panel-header h2 {
+    font-size: 1.08rem;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.01em;
+}
+
+.btn-refresh-users {
+    border: 1px solid rgba(10, 95, 89, 0.6);
+    background: linear-gradient(135deg, var(--brand-strong), var(--brand));
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 8px 13px;
+    cursor: pointer;
+}
+
+.btn-refresh-users:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.admin-table-wrap {
+    overflow-x: auto;
+}
+
+.admin-users-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 620px;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(213, 207, 196, 0.8);
+    font-size: 0.9rem;
+}
+
+.admin-users-table th {
+    color: var(--text-subtle);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.admin-users-table select {
+    width: 120px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 7px 9px;
+    background: #fffdfa;
+}
+
+.btn-delete-user {
+    border: 1px solid rgba(185, 28, 28, 0.3);
+    background: #fff4f4;
+    color: var(--danger);
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-delete-user:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.empty-users {
+    text-align: center;
+    color: var(--text-subtle);
+    padding: 18px 8px;
 }
 
 .gallery-container::before {
@@ -185,5 +280,14 @@
         grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
         gap: 12px;
         padding: 12px;
+    }
+    .admin-panel {
+        width: calc(100% - 24px);
+        margin-top: 2px;
+        padding: 12px;
+    }
+    .admin-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

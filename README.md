@@ -112,6 +112,9 @@ Frontend sẽ chạy tại: **http://localhost:5173**
 
 ## 📖 Cách Sử Dụng
 
+## Tài khoản admin: test01 - 123456
+## Tài khoản user: u_test_456 - 123456
+
 ### Lần Đầu Tiên
 
 1. Mở trình duyệt và truy cập: **http://localhost:5173**
@@ -218,17 +221,6 @@ Sau khi chạy backend, bạn có thể xem tài liệu API đầy đủ tại:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 
-## 🎨 Tùy Chỉnh
-
-### Thay Đổi Màu
-Chỉnh sửa các giá trị hex trong `frontend/src/styles/`:
-```css
-/* Thay đổi từ */
-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
-/* Thành */
-background: linear-gradient(135deg, #YOUR_COLOR_1 0%, #YOUR_COLOR_2 100%);
-```
 
 ### Thay Đổi Port Backend
 Chỉnh sửa trong `frontend/src/api.js`:

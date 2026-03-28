@@ -36,7 +36,10 @@ api.interceptors.response.use(
 
 export const authAPI = {
     register: (userData) => api.post('/auth/register', userData),
-    login: (userData) => api.post('/auth/login', userData),
+    login: (userData) => {
+        const role = userData.role === 'admin' ? 'admin' : 'user';
+        return api.post(`/auth/login/${role}`, userData);
+    },
     getCurrentUser: () => api.get('/users/me'),
 };
 
