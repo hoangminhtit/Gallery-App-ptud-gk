@@ -51,11 +51,26 @@ export const photoAPI = {
                 Authorization: `Bearer ${localStorage.getItem('access_token')}`,
             },
         }),
-    getPhotos: (search) =>
-        api.get('/photos', { params: { search } }),
+    uploadPhotosBatch: (formData) =>
+        axios.post(`${API_BASE_URL}/photos/batch`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        }),
+    getPhotos: (params) =>
+        api.get('/photos', { params }),
     getPhoto: (photoId) => api.get(`/photos/${photoId}`),
     updatePhoto: (photoId, data) => api.put(`/photos/${photoId}`, data),
     deletePhoto: (photoId) => api.delete(`/photos/${photoId}`),
+    restorePhoto: (photoId) => api.post(`/photos/${photoId}/restore`),
+    setFavorite: (photoId, isFavorite) =>
+        api.put(`/photos/${photoId}/favorite`, { is_favorite: isFavorite }),
+    downloadPhoto: (photoId, includeDeleted = false) =>
+        api.get(`/photos/${photoId}/download`, {
+            params: includeDeleted ? { include_deleted: true } : undefined,
+            responseType: 'blob',
+        }),
 };
 
 export const userAPI = {

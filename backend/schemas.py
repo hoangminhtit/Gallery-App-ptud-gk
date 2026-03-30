@@ -3,7 +3,7 @@ Pydantic schemas for request/response validation
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 from config import UserRole
@@ -49,6 +49,8 @@ class PhotoUpdate(BaseModel):
     """Photo update schema"""
     title: Optional[str] = None
     description: Optional[str] = None
+    tags: Optional[List[str]] = None
+    is_favorite: Optional[bool] = None
 
 
 class PhotoResponse(BaseModel):
@@ -57,6 +59,9 @@ class PhotoResponse(BaseModel):
     title: str
     description: Optional[str]
     image_url: str
+    tags: List[str] = []
+    is_favorite: bool = False
+    deleted_at: Optional[datetime] = None
     uploaded_at: datetime
     user_id: int
 

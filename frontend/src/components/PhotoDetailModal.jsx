@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { photoAPI, API_BASE_URL } from '../api';
+import { FEATURE_FLAGS } from '../featureFlags';
 import '../styles/Modal.css';
 
-export default function PhotoDetailModal({ photo, onClose }) {
+export default function PhotoDetailModal({ photo, onClose, onUpdated, includeDeleted }) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(photo.title);
   const [description, setDescription] = useState(photo.description || '');
+  const [tagsInput, setTagsInput] = useState(Array.isArray(photo.tags) ? photo.tags.join(', ') : '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -13,14 +15,59 @@ export default function PhotoDetailModal({ photo, onClose }) {
     setLoading(true);
     setError('');
     try {
-      await photoAPI.updatePhoto(photo.id, {
+      const payload = {
         title,
         description,
-      });
+      };
+
+      if (FEATURE_FLAGS.tags) {
+        const tags = tagsInput
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+        payload.tags = tags;
+      }
+
+      const response = await photoAPI.updatePhoto(photo.id, payload);
       setIsEditing(false);
-      window.location.reload();
+      onUpdated?.(response.data);
     } catch (err) {
       setError('Không thể cập nhật ảnh');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await photoAPI.setFavorite(photo.id, !photo.is_favorite);
+      onUpdated?.(response.data);
+    } catch (err) {
+      setError('Không thể cập nhật yêu thích');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await photoAPI.downloadPhoto(photo.id, includeDeleted);
+      const blobUrl = window.URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${photo.title || 'photo'}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      setError('Không thể tải ảnh');
       console.error(err);
     } finally {
       setLoading(false);
@@ -61,6 +108,18 @@ export default function PhotoDetailModal({ photo, onClose }) {
                   />
                 </div>
 
+                {FEATURE_FLAGS.tags && (
+                  <div className="form-group">
+                    <label>Tags</label>
+                    <input
+                      type="text"
+                      value={tagsInput}
+                      onChange={(e) => setTagsInput(e.target.value)}
+                      placeholder="travel, family"
+                    />
+                  </div>
+                )}
+
                 {error && <p className="error-message">{error}</p>}
                 
                 <div className="action-buttons">
@@ -77,6 +136,7 @@ export default function PhotoDetailModal({ photo, onClose }) {
                       setIsEditing(false);
                       setTitle(photo.title);
                       setDescription(photo.description || '');
+                      setTagsInput(Array.isArray(photo.tags) ? photo.tags.join(', ') : '');
                     }}
                   >
                     Hủy
@@ -87,14 +147,41 @@ export default function PhotoDetailModal({ photo, onClose }) {
               <>
                 <h2>{photo.title}</h2>
                 <p className="description">{photo.description || 'Không có mô tả'}</p>
+                {FEATURE_FLAGS.tags && Array.isArray(photo.tags) && photo.tags.length > 0 && (
+                  <div className="tag-list">
+                    {photo.tags.map((tag) => (
+                      <span key={tag} className="tag-pill">#{tag}</span>
+                    ))}
+                  </div>
+                )}
                 <p className="upload-date">Tải lên: {uploadDate}</p>
                 
-                <button 
-                  className="btn-edit" 
-                  onClick={() => setIsEditing(true)}
-                >
-                  Chỉnh sửa
-                </button>
+                <div className="action-buttons">
+                  <button 
+                    className="btn-edit" 
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Chỉnh sửa
+                  </button>
+                  {FEATURE_FLAGS.favorites && (
+                    <button
+                      className="btn-secondary"
+                      onClick={handleToggleFavorite}
+                      disabled={loading}
+                    >
+                      {photo.is_favorite ? 'Bỏ yêu thích' : 'Yêu thích'}
+                    </button>
+                  )}
+                  {FEATURE_FLAGS.download && (
+                    <button
+                      className="btn-secondary"
+                      onClick={handleDownload}
+                      disabled={loading}
+                    >
+                      Tải ảnh
+                    </button>
+                  )}
+                </div>
               </>
             )}
           </div>

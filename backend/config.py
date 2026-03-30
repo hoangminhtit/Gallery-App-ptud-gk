@@ -34,6 +34,18 @@ ALLOWED_ORIGINS = [
 # Allow localhost/127.0.0.1 on any dev port (Vite can auto-switch ports)
 ALLOWED_ORIGIN_REGEX = r"^https?://(localhost|127\.0\.0\.1):\d+$"
 
+# Feature flags (toggle optional functionality)
+FEATURE_FLAGS = {
+    "pagination": False,
+    "multi_upload": False,
+    "filter_by_date": False,
+    "sort_photos": False,
+    "tags": False,
+    "favorites": False,
+    "download": False,
+    "soft_delete": False,
+}
+
 
 class UserRole(str, Enum):
     """User roles in the system"""

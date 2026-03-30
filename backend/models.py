@@ -3,7 +3,8 @@ SQLAlchemy database models
 """
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SQLEnum, Boolean
+from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
 
 from config import UserRole
@@ -32,6 +33,9 @@ class Photo(Base):
     title = Column(String, index=True)
     description = Column(String, nullable=True)
     image_url = Column(String)
+    tags = Column(JSON, default=list)
+    is_favorite = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
 

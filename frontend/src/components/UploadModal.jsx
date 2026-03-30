@@ -1,25 +1,52 @@
 import { useState } from 'react';
 import { photoAPI } from '../api';
+import { FEATURE_FLAGS } from '../featureFlags';
 import '../styles/Modal.css';
 
-export default function UploadModal({ onClose, onPhotoUploaded }) {
+export default function UploadModal({ onClose, onPhotoUploaded, onPhotosUploaded }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
   const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [filePreview, setFilePreview] = useState(null);
+  const [filePreviews, setFilePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      if (!selectedFile.type.startsWith('image/')) {
-        setError('Vui lòng chọn một tệp hình ảnh');
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length === 0) {
+      return;
+    }
+
+    if (FEATURE_FLAGS.multiUpload) {
+      const invalid = selectedFiles.find((item) => !item.type.startsWith('image/'));
+      if (invalid) {
+        setError('Vui lòng chọn các tệp hình ảnh hợp lệ');
         return;
       }
-      setFile(selectedFile);
+      setFiles(selectedFiles);
       setError('');
-      
+
+      if (FEATURE_FLAGS.previewUpload) {
+        Promise.all(selectedFiles.map((item) => new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => resolve(event.target.result);
+          reader.readAsDataURL(item);
+        }))).then((previews) => setFilePreviews(previews));
+      }
+      return;
+    }
+
+    const selectedFile = selectedFiles[0];
+    if (!selectedFile.type.startsWith('image/')) {
+      setError('Vui lòng chọn một tệp hình ảnh');
+      return;
+    }
+    setFile(selectedFile);
+    setError('');
+    if (FEATURE_FLAGS.previewUpload) {
       const reader = new FileReader();
       reader.onload = (event) => {
         setFilePreview(event.target.result);
@@ -32,12 +59,22 @@ export default function UploadModal({ onClose, onPhotoUploaded }) {
     e.preventDefault();
     setError('');
 
-    if (!title.trim()) {
+    if (!FEATURE_FLAGS.multiUpload && !title.trim()) {
       setError('Vui lòng nhập tên ảnh');
       return;
     }
 
-    if (!file) {
+    if (FEATURE_FLAGS.multiUpload && files.length === 1 && !title.trim()) {
+      setError('Vui lòng nhập tên ảnh');
+      return;
+    }
+
+    if (FEATURE_FLAGS.multiUpload && files.length === 0) {
+      setError('Vui lòng chọn ít nhất một ảnh');
+      return;
+    }
+
+    if (!FEATURE_FLAGS.multiUpload && !file) {
       setError('Vui lòng chọn một ảnh');
       return;
     }
@@ -46,12 +83,24 @@ export default function UploadModal({ onClose, onPhotoUploaded }) {
 
     try {
       const formData = new FormData();
-      formData.append('title', title);
-      formData.append('description', description);
-      formData.append('file', file);
-
-      const response = await photoAPI.uploadPhoto(formData);
-      onPhotoUploaded(response.data);
+      if (FEATURE_FLAGS.tags && tagsInput.trim()) {
+        formData.append('tags', tagsInput);
+      }
+      if (FEATURE_FLAGS.multiUpload) {
+        if (title.trim()) {
+          formData.append('title', title.trim());
+        }
+        formData.append('description', description);
+        files.forEach((item) => formData.append('files', item));
+        const response = await photoAPI.uploadPhotosBatch(formData);
+        onPhotosUploaded?.(response.data || []);
+      } else {
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('file', file);
+        const response = await photoAPI.uploadPhoto(formData);
+        onPhotoUploaded(response.data);
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'Không thể tải ảnh lên');
       console.error(err);
@@ -69,7 +118,7 @@ export default function UploadModal({ onClose, onPhotoUploaded }) {
         
         <form onSubmit={handleSubmit} className="upload-form">
           <div className="form-group">
-            <label htmlFor="title">Tên ảnh *</label>
+            <label htmlFor="title">Tên ảnh {FEATURE_FLAGS.multiUpload ? '(tùy chọn)' : '*'}</label>
             <input
               type="text"
               id="title"
@@ -90,18 +139,40 @@ export default function UploadModal({ onClose, onPhotoUploaded }) {
             />
           </div>
 
+          {FEATURE_FLAGS.tags && (
+            <div className="form-group">
+              <label htmlFor="tags">Tags</label>
+              <input
+                type="text"
+                id="tags"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+                placeholder="travel, family"
+              />
+            </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="file">Chọn ảnh *</label>
             <input
               type="file"
               id="file"
               accept="image/*"
+              multiple={FEATURE_FLAGS.multiUpload}
               onChange={handleFileChange}
               required
             />
           </div>
 
-          {filePreview && (
+          {FEATURE_FLAGS.previewUpload && FEATURE_FLAGS.multiUpload && filePreviews.length > 0 && (
+            <div className="file-preview-grid">
+              {filePreviews.map((preview, index) => (
+                <img key={index} src={preview} alt={`Preview ${index + 1}`} />
+              ))}
+            </div>
+          )}
+
+          {FEATURE_FLAGS.previewUpload && !FEATURE_FLAGS.multiUpload && filePreview && (
             <div className="file-preview">
               <img src={filePreview} alt="Preview" />
             </div>

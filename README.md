@@ -113,7 +113,7 @@ Frontend sẽ chạy tại: **http://localhost:5173**
 ## 📖 Cách Sử Dụng
 
 ## Tài khoản admin: test01 - 123456
-## Tài khoản user: u_test_456 - 123456
+## Tài khoản user: user01 - 123456
 
 ### Lần Đầu Tiên
 
