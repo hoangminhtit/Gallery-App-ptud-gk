@@ -4,6 +4,8 @@ import { FEATURE_FLAGS } from '../featureFlags';
 import '../styles/Modal.css';
 
 export default function UploadModal({ onClose, onPhotoUploaded, onPhotosUploaded }) {
+  const [uploadSource, setUploadSource] = useState('file');
+  const [imageUrl, setImageUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tagsInput, setTagsInput] = useState('');
@@ -69,13 +71,18 @@ export default function UploadModal({ onClose, onPhotoUploaded, onPhotosUploaded
       return;
     }
 
-    if (FEATURE_FLAGS.multiUpload && files.length === 0) {
+    if (FEATURE_FLAGS.multiUpload && files.length === 0 && uploadSource === 'file') {
       setError('Vui lòng chọn ít nhất một ảnh');
       return;
     }
 
-    if (!FEATURE_FLAGS.multiUpload && !file) {
+    if (!FEATURE_FLAGS.multiUpload && !file && uploadSource === 'file') {
       setError('Vui lòng chọn một ảnh');
+      return;
+    }
+
+    if (uploadSource === 'url' && !imageUrl.trim()) {
+      setError('Vui lòng nhập đường link ảnh');
       return;
     }
 
@@ -86,7 +93,21 @@ export default function UploadModal({ onClose, onPhotoUploaded, onPhotosUploaded
       if (FEATURE_FLAGS.tags && tagsInput.trim()) {
         formData.append('tags', tagsInput);
       }
-      if (FEATURE_FLAGS.multiUpload) {
+      if (uploadSource === 'url') {
+        const payload = {
+          url: imageUrl.trim(),
+          title: title.trim() || undefined,
+          description: description || undefined,
+        };
+        if (FEATURE_FLAGS.tags && tagsInput.trim()) {
+          payload.tags = tagsInput
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean);
+        }
+        const response = await photoAPI.uploadPhotoFromUrl(payload);
+        onPhotoUploaded(response.data);
+      } else if (FEATURE_FLAGS.multiUpload) {
         if (title.trim()) {
           formData.append('title', title.trim());
         }
@@ -117,6 +138,24 @@ export default function UploadModal({ onClose, onPhotoUploaded, onPhotosUploaded
         <h2>Tải ảnh lên</h2>
         
         <form onSubmit={handleSubmit} className="upload-form">
+          {FEATURE_FLAGS.uploadFromUrl && (
+            <div className="upload-source-toggle">
+              <button
+                type="button"
+                className={`toggle-button ${uploadSource === 'file' ? 'is-active' : ''}`}
+                onClick={() => setUploadSource('file')}
+              >
+                Từ máy
+              </button>
+              <button
+                type="button"
+                className={`toggle-button ${uploadSource === 'url' ? 'is-active' : ''}`}
+                onClick={() => setUploadSource('url')}
+              >
+                Từ link
+              </button>
+            </div>
+          )}
           <div className="form-group">
             <label htmlFor="title">Tên ảnh {FEATURE_FLAGS.multiUpload ? '(tùy chọn)' : '*'}</label>
             <input
@@ -152,19 +191,35 @@ export default function UploadModal({ onClose, onPhotoUploaded, onPhotosUploaded
             </div>
           )}
 
-          <div className="form-group">
-            <label htmlFor="file">Chọn ảnh *</label>
-            <input
-              type="file"
-              id="file"
-              accept="image/*"
-              multiple={FEATURE_FLAGS.multiUpload}
-              onChange={handleFileChange}
-              required
-            />
-          </div>
+          {uploadSource === 'file' && (
+            <div className="form-group">
+              <label htmlFor="file">Chọn ảnh *</label>
+              <input
+                type="file"
+                id="file"
+                accept="image/*"
+                multiple={FEATURE_FLAGS.multiUpload}
+                onChange={handleFileChange}
+                required
+              />
+            </div>
+          )}
 
-          {FEATURE_FLAGS.previewUpload && FEATURE_FLAGS.multiUpload && filePreviews.length > 0 && (
+          {uploadSource === 'url' && (
+            <div className="form-group">
+              <label htmlFor="imageUrl">Đường link ảnh *</label>
+              <input
+                type="url"
+                id="imageUrl"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://example.com/photo.jpg"
+                required
+              />
+            </div>
+          )}
+
+          {uploadSource === 'file' && FEATURE_FLAGS.previewUpload && FEATURE_FLAGS.multiUpload && filePreviews.length > 0 && (
             <div className="file-preview-grid">
               {filePreviews.map((preview, index) => (
                 <img key={index} src={preview} alt={`Preview ${index + 1}`} />
@@ -172,7 +227,7 @@ export default function UploadModal({ onClose, onPhotoUploaded, onPhotosUploaded
             </div>
           )}
 
-          {FEATURE_FLAGS.previewUpload && !FEATURE_FLAGS.multiUpload && filePreview && (
+          {uploadSource === 'file' && FEATURE_FLAGS.previewUpload && !FEATURE_FLAGS.multiUpload && filePreview && (
             <div className="file-preview">
               <img src={filePreview} alt="Preview" />
             </div>

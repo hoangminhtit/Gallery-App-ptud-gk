@@ -58,6 +58,7 @@ export const photoAPI = {
                 Authorization: `Bearer ${localStorage.getItem('access_token')}`,
             },
         }),
+    uploadPhotoFromUrl: (payload) => api.post('/photos/from-url', payload),
     getPhotos: (params) =>
         api.get('/photos', { params }),
     getPhoto: (photoId) => api.get(`/photos/${photoId}`),

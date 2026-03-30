@@ -45,6 +45,14 @@ class PhotoCreate(BaseModel):
     description: Optional[str] = None
 
 
+class PhotoUrlCreate(BaseModel):
+    """Photo upload via URL schema"""
+    url: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
 class PhotoUpdate(BaseModel):
     """Photo update schema"""
     title: Optional[str] = None

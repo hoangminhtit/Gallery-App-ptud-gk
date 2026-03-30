@@ -5,6 +5,9 @@ Photo endpoints - CRUD operations
 import os
 import secrets
 import string
+import mimetypes
+import urllib.parse
+import urllib.request
 from datetime import datetime, date, time
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Query, Form, Response
@@ -13,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User, Photo
-from schemas import PhotoUpdate, PhotoResponse
+from schemas import PhotoUpdate, PhotoResponse, PhotoUrlCreate
 from security import get_current_user
 from config import UPLOAD_FOLDER, UserRole, FEATURE_FLAGS
 
@@ -41,6 +44,33 @@ def generate_filename(filename: str) -> str:
         secrets.choice(string.ascii_letters + string.digits) for _ in range(8)
     )
     return f"{name}_{random_suffix}{ext}"
+
+
+def _resolve_extension(filename: str, content_type: str) -> str:
+    ext = os.path.splitext(filename)[1]
+    if ext:
+        return ext
+    guessed = mimetypes.guess_extension(content_type or "")
+    return guessed or ".jpg"
+
+
+def _download_image(url: str) -> tuple[bytes, str, str]:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="URL must be http or https")
+
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            content_type = response.info().get_content_type()
+            if not content_type.startswith("image/"):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="URL must point to an image")
+            data = response.read()
+            filename = os.path.basename(parsed.path) or "upload"
+            return data, filename, content_type
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 def _normalize_photo(photo: Photo) -> Photo:
@@ -97,6 +127,42 @@ async def upload_photo(
     db.refresh(db_photo)
     
     return db_photo
+
+
+@router.post("/from-url", response_model=PhotoResponse)
+def upload_photo_from_url(
+    payload: PhotoUrlCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not FEATURE_FLAGS.get("upload_from_url"):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+
+    data, original_name, content_type = _download_image(payload.url)
+    safe_name = _sanitize_filename(payload.title or original_name)
+    ext = _resolve_extension(safe_name, content_type)
+    filename = generate_filename(f"{safe_name}{ext}")
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+    try:
+        with open(file_path, "wb") as f:
+            f.write(data)
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+
+    db_photo = Photo(
+        title=payload.title or os.path.splitext(safe_name)[0] or "Untitled",
+        description=payload.description,
+        image_url=f"/uploads/{filename}",
+        tags=payload.tags if FEATURE_FLAGS.get("tags") and payload.tags is not None else [],
+        user_id=current_user.id,
+    )
+
+    db.add(db_photo)
+    db.commit()
+    db.refresh(db_photo)
+
+    return _normalize_photo(db_photo)
 
 
 @router.get("", response_model=List[PhotoResponse])

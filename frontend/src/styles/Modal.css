@@ -254,6 +254,31 @@
     padding: 0 30px 24px;
 }
 
+.upload-source-toggle {
+    display: inline-flex;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 999px;
+    background: rgba(15, 118, 110, 0.08);
+    border: 1px solid rgba(15, 118, 110, 0.2);
+    margin: 0 30px 18px;
+}
+
+.toggle-button {
+    border: none;
+    background: transparent;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--text-subtle);
+}
+
+.toggle-button.is-active {
+    background: #0f766e;
+    color: #fff;
+}
+
 .file-preview {
     margin: 20px 0;
     display: flex;

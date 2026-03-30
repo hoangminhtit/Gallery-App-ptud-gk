@@ -38,6 +38,7 @@ ALLOWED_ORIGIN_REGEX = r"^https?://(localhost|127\.0\.0\.1):\d+$"
 FEATURE_FLAGS = {
     "pagination": False,
     "multi_upload": False,
+    "upload_from_url": False,
     "filter_by_date": False,
     "sort_photos": False,
     "tags": False,
